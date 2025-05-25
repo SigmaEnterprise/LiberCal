@@ -22,8 +22,6 @@ function clearEventsList() {
   eventsList.innerHTML = '';
 }
 
-// ... previous code ...
-
 function renderEvents(events) {
   clearEventsList();
   if (events.length === 0) {
@@ -46,17 +44,16 @@ function renderEvents(events) {
     eventsList.appendChild(div);
   });
 
-  // Attach event listeners for buttons after rendering
   document.querySelectorAll('.edit-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const idx = btn.getAttribute('data-index');
+      const idx = Number(btn.getAttribute('data-index'));
       startEditing(idx);
     });
   });
 
   document.querySelectorAll('.delete-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const idx = btn.getAttribute('data-index');
+      const idx = Number(btn.getAttribute('data-index'));
       deleteEvent(idx);
     });
   });
@@ -66,15 +63,12 @@ function startEditing(idx) {
   const events = getEvents();
   const e = events[idx];
 
-  // Fill form with existing data
   eventForm.title.value = e.title;
   eventForm.date.value = e.date;
   eventForm.time.value = e.time;
 
-  // Change form button text
   eventForm.querySelector('button').textContent = 'Update Event';
 
-  // Add editing index
   eventForm.dataset.editIndex = idx;
 }
 
@@ -94,7 +88,6 @@ function clearEditing() {
   eventForm.querySelector('button').textContent = 'Add Event';
 }
 
-// Update form submit event to handle add/edit
 eventForm.addEventListener('submit', e => {
   e.preventDefault();
   const title = eventForm.title.value.trim();
@@ -107,23 +100,21 @@ eventForm.addEventListener('submit', e => {
 
   const events = getEvents();
 
-  if (eventForm.dataset.editIndex !== undefined) {
-    // Update existing event
-    const idx = eventForm.dataset.editIndex;
+  if ('editIndex' in eventForm.dataset) {
+    const idx = Number(eventForm.dataset.editIndex);
     events[idx] = { title, date, time };
     saveEvents(events);
     alert('Event updated!');
     clearEditing();
     renderEvents(events);
   } else {
-    // Add new event
     addEvent(title, date, time);
     alert('Event added!');
     eventForm.reset();
+    renderEvents(getEvents());
   }
 });
 
-// When viewing day/week, clear any editing state
 viewDayBtn.addEventListener('click', () => {
   clearEditing();
   const date = viewDateInput.value;
@@ -146,35 +137,22 @@ viewWeekBtn.addEventListener('click', () => {
   const day = dateObj.getDay();
   const diffToMonday = (day === 0 ? -6 : 1) - day;
   const monday = new Date(dateObj);
+  monday.setHours(0, 0, 0, 0);
   monday.setDate(dateObj.getDate() + diffToMonday);
+
+  const weekEnd = new Date(monday);
+  weekEnd.setDate(monday.getDate() + 6);
+  weekEnd.setHours(23, 59, 59, 999);
 
   const events = getEvents().filter(e => {
     const eDate = new Date(e.date);
-    return eDate >= monday && eDate <= new Date(monday.getTime() + 6 * 86400000);
+    return eDate >= monday && eDate <= weekEnd;
   });
   renderEvents(events);
 });
 
-
-viewWeekBtn.addEventListener('click', () => {
-  const selectedDate = viewDateInput.value;
-  if (!selectedDate) {
-    alert('Please select a date.');
-    return;
-  }
-  const dateObj = new Date(selectedDate);
-  const day = dateObj.getDay();
-  // Get Monday of current week (Sunday = 0, Monday = 1)
-  const diffToMonday = (day === 0 ? -6 : 1) - day;
-  const monday = new Date(dateObj);
-  monday.setDate(dateObj.getDate() + diffToMonday);
-
-  const events = getEvents().filter(e => {
-    const eDate = new Date(e.date);
-    return eDate >= monday && eDate <= new Date(monday.getTime() + 6 * 86400000);
-  });
-  renderEvents(events);
-});
+// On load, render all events
+renderEvents(getEvents());
 
 // Register Service Worker
 if ('serviceWorker' in navigator) {

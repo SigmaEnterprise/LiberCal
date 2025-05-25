@@ -2,10 +2,9 @@ const CACHE_NAME = 'calendar-scheduler-cache-v1';
 const FILES_TO_CACHE = [
   '/',
   '/index.html',
-  '/style.css',
+  '/styles.css',
   '/app.js',
   '/manifest.json',
-  '/icon.png',
   '/icon.png'
 ];
 
@@ -22,12 +21,14 @@ self.addEventListener('install', evt => {
 self.addEventListener('activate', evt => {
   evt.waitUntil(
     caches.keys().then(keyList =>
-      Promise.all(keyList.map(key => {
-        if (key !== CACHE_NAME) {
-          console.log('[ServiceWorker] Removing old cache', key);
-          return caches.delete(key);
-        }
-      }))
+      Promise.all(
+        keyList.map(key => {
+          if (key !== CACHE_NAME) {
+            console.log('[ServiceWorker] Removing old cache', key);
+            return caches.delete(key);
+          }
+        })
+      )
     )
   );
   self.clients.claim();
